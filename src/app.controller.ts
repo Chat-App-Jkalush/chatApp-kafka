@@ -1,12 +1,21 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, Inject, Post } from '@nestjs/common';
+import { ClientKafka, MessagePattern } from '@nestjs/microservices';
+
+interface MessageInfoDTO {
+  recipients: string[];
+  chatName: string;
+  content: string;
+}
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    @Inject('KAFKA_SERVICE') private readonly kafkaService: ClientKafka,
+  ) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Post('pop-message')
+  async popMessage(dto: MessageInfoDTO) {
+    this.kafkaService.emit('pop-message', dto);
+    return { status: 'Message sent to Kafka' };
   }
 }
